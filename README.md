@@ -72,12 +72,12 @@ A Streamlit-based web application that lets you upload invoice images, automatic
     ```
 
 2. **Upload an invoice image**
-    - Click Browse files and select a PNG/JPG/JPEG invoice.
-    - The app will display your image and extract invoice fields via Gemini.
-    - Review the parsed JSON, then click “Save this invoice to the database”.
+- Click Browse files and select a PNG/JPG/JPEG invoice.
+- The app will display your image and extract invoice fields via Gemini.
+- Review the parsed JSON, then click “Save this invoice to the database”.
 
 3. **Explore existing invoices**
-    - Use the sidebar date picker to filter records.
-    - View summary metrics (total billed, count, average).
-    - Browse the table of invoices.
-    - Select any invoice to inspect full JSON details.
+- Use the sidebar date picker to filter records.
+- View summary metrics (total billed, count, average).
+- Browse the table of invoices.
+- Select any invoice to inspect full JSON details.

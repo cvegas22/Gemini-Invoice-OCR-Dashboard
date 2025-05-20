@@ -3,11 +3,10 @@ import pandas as pd
 from sqlalchemy import create_engine, text, MetaData, Table, Column, String, Date, Numeric, Text, JSON
 from sqlalchemy.exc import SQLAlchemyError
 import vertexai
-from vertexai.preview.generative_models import GenerativeModel, Part, Image
+from vertexai.preview.generative_models import GenerativeModel, Image
 from dotenv import load_dotenv
 import os
 import json
-import base64
 from datetime import date
 import logging
 

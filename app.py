@@ -133,9 +133,6 @@ def extract_invoice_fields_with_gemini(image_bytes: bytes) -> dict:
     # Configure the genai client with the API key
     genai.configure(api_key=GOOGLE_API_KEY)
 
-    # Base64-encode the image for the multimodal prompt
-    b64 = base64.b64encode(image_bytes).decode()
-
     # Prompt the model to extract exactly the required fields
     prompt = (
         "You are given an invoice image. Extract and return a JSON object with these keys: "
@@ -146,16 +143,14 @@ def extract_invoice_fields_with_gemini(image_bytes: bytes) -> dict:
     )
 
     # Call the multimodal chat endpoint
-    response = genai.chat.completions.create(
-        model="gemini-2.5-vision",
-        messages=[
-            {"author": "user", "content": prompt},
-            {"author": "user", "content": {"type": "image", "image_content": b64}}
-        ]
-    )
+    model = genai.GenerativeModel("gemini-pro-vision")
+    response = model.generate_content([prompt, image_bytes])
+    
     # Parse JSON string returned in the model’s response
-    content = response.choices[0].message.content
-    return json.loads(content)
+    try:
+        return json.loads(response.text)
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Model response is not valid JSON: {response.text}") from e
 
 def save_invoice_to_db(invoice: dict, engine):
     """

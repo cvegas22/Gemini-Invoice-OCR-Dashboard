@@ -2,13 +2,15 @@ import streamlit as st
 import pandas as pd
 from sqlalchemy import create_engine, text, MetaData, Table, Column, String, Date, Numeric, Text, JSON
 from sqlalchemy.exc import SQLAlchemyError
-import google.generativeai as genai
+import vertexai
+from vertexai.preview.generative_models import GenerativeModel, Part, Image
 from dotenv import load_dotenv
 import os
 import json
 import base64
 from datetime import date
 import logging
+
 
 # Page Configuration
 st.set_page_config(layout="wide", page_title="Invoices Dashboard")
@@ -23,7 +25,7 @@ DB_HOST = os.getenv("MYSQL_HOST")
 DB_USER = os.getenv("MYSQL_USER")
 DB_PASS = os.getenv("MYSQL_PASSWORD")
 DB_NAME = os.getenv("MYSQL_DATABASE")
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+GOOGLE_KEY = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
 
 # DB Engine Creation & Table Initialization
 @st.cache_resource
@@ -127,28 +129,44 @@ def load_data(_engine):
 # Gemini-based Image Processign & Field Extraction
 def extract_invoice_fields_with_gemini(image_bytes: bytes) -> dict:
     """
-    Send the invoice image to Gemini 2.5-vision and extract fields as JSON.
-    Requires GOOGLE_API_KEY in env.
+    Send the invoice image to gemini-2.0-flash-001 and extract fields as JSON.
+    Requires GOOGLE_APPLICATION_CREDENTIALS in env.
     """
-    # Configure the genai client with the API key
-    genai.configure(api_key=GOOGLE_API_KEY)
+    # Initialize Vertex AI with project and location
+    vertexai.init(
+        project="invoice-gemini-app",
+        location="us-central1"
+    )
+
+    # Initialize Gemini model
+    model = GenerativeModel("gemini-2.0-flash-001")
 
     # Prompt the model to extract exactly the required fields
     prompt = (
-        "You are given an invoice image. Extract and return a JSON object with these keys: "
-        "source_file (string), invoice_number (string), invoice_date (YYYY-MM-DD), "
-        "subtotal (number), discounts (number), total_taxes (number), total_amount (number), "
-        "payment_method (string), notes (string), client (JSON object), items (JSON array), "
-        "taxes_detail (JSON object), supplier (JSON object)."
+        "You are given an image of an invoice. Extract and return only a valid JSON object "
+        "with the following top-level keys and types:\n\n"
+        "- source_file: string\n"
+        "- invoice_number: string\n"
+        "- invoice_date: string (format: YYYY-MM-DD)\n"
+        "- subtotal: number\n"
+        "- discounts: number\n"
+        "- total_taxes: number\n"
+        "- total_amount: number\n"
+        "- payment_method: string\n"
+        "- notes: string\n"
+        "- client: JSON object with client information\n"
+        "- items: array of JSON objects, each representing a line item\n"
+        "- taxes_detail: JSON object with tax breakdown\n"
+        "- supplier: JSON object with supplier details\n\n"
+        "Respond ONLY with the JSON object, such that the response can be parsed as JSON"
     )
 
-    # Call the multimodal chat endpoint
-    model = genai.GenerativeModel("gemini-pro-vision")
-    response = model.generate_content([prompt, image_bytes])
+    # Send prompt and image
+    response = model.generate_content([Image.from_bytes(image_bytes), prompt])
     
     # Parse JSON string returned in the model’s response
     try:
-        return json.loads(response.text)
+        return json.loads(response.text.strip().removeprefix("```json").removeprefix("```").removesuffix("```").strip())
     except json.JSONDecodeError as e:
         raise ValueError(f"Model response is not valid JSON: {response.text}") from e
 
@@ -178,8 +196,8 @@ if uploaded:
     img_bytes = uploaded.read()
     st.image(img_bytes, caption="Uploaded Invoice", use_column_width=True)
     # Ensure API key is set before calling Gemini
-    if not GOOGLE_API_KEY:
-        st.error("Set your GOOGLE_API_KEY in .env to enable Gemini extraction.")
+    if not GOOGLE_KEY:
+        st.error("Set your GOOGLE_APPLICATION_CREDENTIALS in .env to enable Gemini extraction.")
     else:
         with st.spinner("Extracting fields with Gemini..."):
             try:

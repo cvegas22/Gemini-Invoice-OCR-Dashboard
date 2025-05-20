@@ -1,11 +1,11 @@
 # Invoices Dashboard
 
-A Streamlit-based web application that lets you upload invoice images, automatically extract structured invoice data using Google Gemini Vision, store it in a MySQL database, and interactively explore your invoices with date filters, summary metrics, and full JSON details.
+A Streamlit-based web application that lets you upload invoice images, automatically extract structured invoice data using Google Gemini 2.0 Flash, store it in a MySQL database, and interactively explore your invoices with date filters, summary metrics, and full JSON details.
 
 ## Features
 
 - **Invoice Upload & OCR**  
-  Upload PNG/JPG/JPEG invoice images and extract key fields (invoice number, date, line items, totals, client/supplier info, etc.) via Google Gemini Vision.
+  Upload PNG/JPG/JPEG invoice images and extract key fields (invoice number, date, line items, totals, client/supplier info, etc.) via Google Gemini 2.0 Flash.
 
 - **Persistent Storage**  
   Automatically creates and manages an `invoices` table in MySQL (via SQLAlchemy). Stores each invoice as a JSON-enriched record.
@@ -28,7 +28,7 @@ A Streamlit-based web application that lets you upload invoice images, automatic
 
 - Python 3.8+  
 - MySQL server 
-- A Google Cloud project with the Gemini Vision API enabled  
+- A Google Cloud project with the Vertex AI API enabled  
 - Streamlit credentials (optional for deployment)
 
 ## Installation
@@ -60,8 +60,8 @@ A Streamlit-based web application that lets you upload invoice images, automatic
     MYSQL_PASSWORD=your-db-password
     MYSQL_DATABASE=your-db-name
 
-    # Google Gemini Vision API
-    GOOGLE_API_KEY=your-google-api-key
+    # Path to Google Service Account Key
+    GOOGLE_APPLICATION_CREDENTIALS=path-to-google-json-key
     ```
 
 ## Usage
